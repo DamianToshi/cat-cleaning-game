@@ -2,29 +2,32 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>10秒全力！猫様トイレ掃除</title>
+    <title>10秒全力！アメリ様トイレ掃除２</title>
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
     <style>
-        body { font-family: 'Hiragino Kaku Gothic ProN', sans-serif; text-align: center; background-color: #ffeaa7; margin: 0; padding: 20px; }
-        #info-panel { display: flex; justify-content: center; gap: 20px; font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        body { font-family: 'Hiragino Kaku Gothic ProN', sans-serif; text-align: center; background-color: #ffeaa7; margin: 0; padding: 0; }
+        #info-panel { display: flex; justify-content: center; gap: 20px; font-size: 24px; font-weight: bold; margin-bottom: 10px; position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 10; }
         #game-container {
-            position: relative;
-            width: 800px;
-            height: 500px;
-            margin: 0 auto;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
             background: #fff;
-            border: 10px solid #d63031;
-            border-radius: 20px;
+            border: none;
+            border-radius: 0;
             overflow: hidden;
-            background-image: radial-gradient(#eee 10%, transparent 10%);
+            background-image: radial-gradient(#e6e0e0 10%, transparent 10%);
             background-size: 20px 20px;
         }
         #cat {
             position: absolute;
-            width: 120px;
+            width: 240px;
             top: 100px;
-            transition: left 0.5s ease-out; /* 猫の移動を滑らかにする */
+            transition: left 0.5s ease-out, top 0.5s ease-out; /* 猫の移動を滑らかにする */
+            transform-origin: center;
         }
         .poop {
             position: absolute;
@@ -34,20 +37,21 @@
             animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+        #countdown { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 100px; font-weight: bold; z-index: 20; display: none; }
         button { padding: 10px 20px; font-size: 20px; cursor: pointer; background: #00b894; color: white; border: none; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-    <h1>🐱 猫様のトイレ掃除：10秒チャレンジ！</h1>
+    <h1 style="position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); z-index: 10;">🐱 アメリ様のトイレ掃除：10秒チャレンジ！</h1>
     <div id="info-panel">
         <div>残り時間: <span id="timer">10</span>s</div>
         <div>掃除した数: <span id="score">0</span></div>
     </div>
-    <button id="start-btn">ゲーム開始！</button>
+    <div id="countdown">3</div>
 
     <div id="game-container">
-        <img src="my_cat.jpg" id="cat" alt="猫様" style="left: 340px;">
+        <img src="my_cat.jpg" id="cat" alt="猫様" style="left: 50%; transform: translateX(-50%);">
     </div>
 
     <script type="py">
@@ -76,12 +80,14 @@
             
             # ゲーム中のループ
             while time_left > 0:
-                # 1. 猫をランダムに左右に動かす
-                new_x = random.randint(0, 680)
+                # 1. 猫をランダムに移動させる
+                new_x = random.randint(0, window.innerWidth - 240)
+                new_y = random.randint(100, window.innerHeight - 200)
                 cat_element.style.left = f"{new_x}px"
+                cat_element.style.top = f"{new_y}px"
                 
                 # 2. 猫の位置に「ブツ」を置く
-                create_poop(new_x + 30, 200)
+                create_poop(new_x + 120, new_y + 100)
                 
                 # 3. 1秒待機（カウントダウン）
                 await asyncio.sleep(0.8) # 少し早めにブツを出す
@@ -108,14 +114,29 @@
             new_poop.onclick = clean_poop
             container.appendChild(new_poop)
 
-        async def start_game(event):
+        async def countdown_and_start(event):
             if not is_playing:
                 # 画面に残っているブツを掃除
                 for p in document.querySelectorAll(".poop"):
                     p.remove()
+                countdown = document.querySelector("#countdown")
+                countdown.style.display = "block"
+                for i in range(3, 0, -1):
+                    countdown.innerText = str(i)
+                    await asyncio.sleep(1)
+                countdown.style.display = "none"
+                h1 = document.querySelector("h1")
+                h1.style.display = "none"
                 await game_loop()
 
-        document.querySelector("#start-btn").onclick = start_game
+        container.onclick = countdown_and_start
+
+        async def on_cat_click(e):
+            cat_element.style.transform = "scale(1.5) translateX(-50%)"
+            await asyncio.sleep(0.2)
+            cat_element.style.transform = "translateX(-50%)"
+
+        cat_element.onclick = on_cat_click
     </script>
 
 </body>
