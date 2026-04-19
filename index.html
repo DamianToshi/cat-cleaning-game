@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>10秒全力！猫様トイレ掃除</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <style>
+        body { font-family: 'Hiragino Kaku Gothic ProN', sans-serif; text-align: center; background-color: #ffeaa7; margin: 0; padding: 20px; }
+        #info-panel { display: flex; justify-content: center; gap: 20px; font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            margin: 0 auto;
+            background: #fff;
+            border: 10px solid #d63031;
+            border-radius: 20px;
+            overflow: hidden;
+            background-image: radial-gradient(#eee 10%, transparent 10%);
+            background-size: 20px 20px;
+        }
+        #cat {
+            position: absolute;
+            width: 120px;
+            top: 100px;
+            transition: left 0.5s ease-out; /* 猫の移動を滑らかにする */
+        }
+        .poop {
+            position: absolute;
+            font-size: 50px;
+            cursor: pointer;
+            user-select: none;
+            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+        button { padding: 10px 20px; font-size: 20px; cursor: pointer; background: #00b894; color: white; border: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>🐱 猫様のトイレ掃除：10秒チャレンジ！</h1>
+    <div id="info-panel">
+        <div>残り時間: <span id="timer">10</span>s</div>
+        <div>掃除した数: <span id="score">0</span></div>
+    </div>
+    <button id="start-btn">ゲーム開始！</button>
+
+    <div id="game-container">
+        <img src="my_cat.jpg" id="cat" alt="猫様" style="left: 340px;">
+    </div>
+
+    <script type="py">
+        from pyscript import document, window
+        import asyncio
+        import random
+
+        score = 0
+        time_left = 10
+        is_playing = False
+
+        cat_element = document.querySelector("#cat")
+        timer_display = document.querySelector("#timer")
+        score_display = document.querySelector("#score")
+        container = document.querySelector("#game-container")
+
+        async def game_loop():
+            global score, time_left, is_playing
+            
+            # 初期化
+            score = 0
+            time_left = 10
+            is_playing = True
+            score_display.innerText = score
+            timer_display.innerText = time_left
+            
+            # ゲーム中のループ
+            while time_left > 0:
+                # 1. 猫をランダムに左右に動かす
+                new_x = random.randint(0, 680)
+                cat_element.style.left = f"{new_x}px"
+                
+                # 2. 猫の位置に「ブツ」を置く
+                create_poop(new_x + 30, 200)
+                
+                # 3. 1秒待機（カウントダウン）
+                await asyncio.sleep(0.8) # 少し早めにブツを出す
+                time_left -= 1
+                timer_display.innerText = max(0, time_left)
+
+            is_playing = False
+            window.alert(f"タイムアップ！あなたのスコアは {score} でした！")
+
+        def create_poop(x, y):
+            new_poop = document.createElement("div")
+            new_poop.className = "poop"
+            new_poop.innerText = "💩"
+            new_poop.style.left = f"{x}px"
+            new_poop.style.top = f"{y + random.randint(50, 150)}px"
+
+            def clean_poop(e):
+                global score
+                if not is_playing: return
+                e.target.remove()
+                score += 1
+                score_display.innerText = score
+
+            new_poop.onclick = clean_poop
+            container.appendChild(new_poop)
+
+        async def start_game(event):
+            if not is_playing:
+                # 画面に残っているブツを掃除
+                for p in document.querySelectorAll(".poop"):
+                    p.remove()
+                await game_loop()
+
+        document.querySelector("#start-btn").onclick = start_game
+    </script>
+
+</body>
+</html>
